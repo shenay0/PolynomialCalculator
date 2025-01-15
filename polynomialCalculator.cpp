@@ -133,7 +133,7 @@ Fraction addFractions(const Fraction& f1, const Fraction& f2) {
 }
 
 void substractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2){
-    
+
 }
 void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2) {
     Polynomial result;
@@ -239,10 +239,6 @@ Monomial inputMonomial(unsigned int power){
     //cout << "Enter monomial coefficient (fractional form):\n";
     Fraction coefficient = inputFraction();
 
-    // unsigned int exponent;
-    // cout << "Enter exponent(non- negative integer): ";
-    // cin >> exponent;
-    
     return {coefficient, power};
 
 }
@@ -323,7 +319,7 @@ int main(){
      cout<<endl;
      addPolynomials(p,t);
 
-
+    
 
 
     
