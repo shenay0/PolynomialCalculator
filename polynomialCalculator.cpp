@@ -19,8 +19,8 @@
 using namespace std;
 
 typedef pair<long long, long long>    Fraction    ;
-typedef pair<Fraction, unsigned int>     Monomial    ;
-typedef pair<vector<Monomial>, unsigned int >  Polynomial  ;
+typedef pair<Fraction, unsigned int>   Monomial    ;
+typedef vector <Monomial>  Polynomial  ;
 
 int fromCharToInt(char a);
 long long findGCD(long long a, long long b);
@@ -28,8 +28,14 @@ int absValue(int num);
 Fraction inputFraction();
 Fraction simplifyFraction(long long numerator, long long denominator);
 long long parseInteger(const char* str, int index);
-Monomial inputMonomial();
-Polynomial inputPolynomial(int power);
+Monomial inputMonomial(unsigned int power);
+Polynomial inputPolynomial();
+void printPolynomial(const Polynomial& polynomial);
+//void manageOptions();
+void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
+Fraction addFractions(const Fraction& f1, const Fraction& f2);
+void substractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
+
 
 
 
@@ -99,24 +105,84 @@ long long parseInteger(const char* str, int index) {
     return isNegative ? -result : result;
 }
 
-
-void manageOptions() {
-    unsigned int option = 0;
+// void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2){
     
-    cout << "Enter your option here>> ";
-    cin >> option;
+//     Monomial monomial1, monomial2,monomial;
+//     int index=0;
+//     unsigned int maxSize = (polynomial1.first.size() > polynomial2.first.size()) ? polynomial1.first.size() : polynomial2.first.size();
+//     Polynomial result;
+//     for(int i = maxSize; i >= 0; i--){
+//         monomial1 = polynomial1[i];
+//         monomial2 = polynomial2[i];
+//         monomial = monomial1.first + monomial2.first;
+//     }
+//     Monomial monomial1 = polynomial1.first[i]
+
+
+// }
+Fraction addFractions(const Fraction& f1, const Fraction& f2) {
+    long long numerator1 = f1.first;
+    long long denominator1 = f1.second;
+    long long numerator2 = f2.first;
+    long long denominator2 = f2.second;
+
+    long long commonDenominator = denominator1 * denominator2;
+    long long newNumerator = numerator1 * denominator2 + numerator2 * denominator1;
+   
+    return simplifyFraction(newNumerator, commonDenominator);
 }
+
+void substractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2){
+    
+}
+void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2) {
+    Polynomial result;
+    unsigned int i = 0, j = 0;
+    
+    // Process both polynomials term by term
+    while (i < polynomial1.size() || j < polynomial2.size()) {
+        if (i < polynomial1.size() && (j >= polynomial2.size() || polynomial1[i].second > polynomial2[j].second)) {
+            // If poly1 has a term with a higher power, add it directly to the result
+            result.push_back(polynomial1[i]);
+            i++;
+        } 
+        else if (j < polynomial2.size() && (i >= polynomial1.size() || polynomial2[j].second > polynomial1[i].second)) {
+            // If poly2 has a term with a higher power, add it directly to the result
+            result.push_back(polynomial2[j]);
+            j++;
+        } 
+        else { 
+            // If both polynomials have terms with the same power, add their coefficients
+            Fraction newCoefficient = addFractions(polynomial1[i].first, polynomial2[j].first);
+            result.push_back(Monomial(newCoefficient, polynomial1[i].second));
+            i++;
+            j++;
+        }
+    }
+    
+    printPolynomial(result);
+}
+// void manageOptions() {
+//     unsigned int option = 0;
+    
+//     cout << "Enter your option here>> ";
+//     cin >> option;
+
 //     switch(option) {
 //         case 1: {
-//             Polynomial polynomial1 = inputPolynomial("P(x)");
-//             printPolynomial("P(x)", polynomial1);
+//             cout << "Enter Polynomial P(x): \n" << endl;
+//             Polynomial polynomial1 = inputPolynomial();
+//             printPolynomial(polynomial1);
 
 //             cout<<endl;
 
-//             Polynomial polynomial2 = inputPolynomial("Q(x)");
-//             printPolynomial("Q(x)", polynomial2);
+//             cout << "Enter Polynomial Q(x): " << endl;
+//             Polynomial polynomial2 = inputPolynomial();
+//             printPolynomial( polynomial2);
 
-//             printPolynomial("P(x) + Q(x)", additionalPolynomials(polynomial1, polynomial2));
+
+//             cout << "P(x) + Q(x): ";
+//             addPolynomials(polynomial1, polynomial2);
             
 //             return;
 //         }
@@ -156,7 +222,7 @@ Fraction inputFraction()  {
 
     // Parse the numerator
     numerator = parseInteger(input, index);
-
+    index++;
     // Check for '/'
     if (input[index] == '/') {
         index++; // Skip the '/'
@@ -168,61 +234,63 @@ Fraction inputFraction()  {
     return simplifyFraction(numerator, denominator);
 
 }
-Monomial inputMonomial(){
+
+Monomial inputMonomial(unsigned int power){
     //cout << "Enter monomial coefficient (fractional form):\n";
     Fraction coefficient = inputFraction();
 
-    unsigned int exponent;
-    cout << "Enter exponent(non- negative integer): ";
-    cin >> exponent;
+    // unsigned int exponent;
+    // cout << "Enter exponent(non- negative integer): ";
+    // cin >> exponent;
     
-    return {coefficient, exponent};
+    return {coefficient, power};
 
 }
-Polynomial inputPolynomial(int power) {
+Polynomial inputPolynomial() {
     Polynomial polynomial;
+    
+    unsigned int power;
+    cout << "Enter degree of your Polynomial: " << endl;
+    cin >> power;
 
     for (int i = power; i >= 0; i--){
         cout << "Enter coefficient before x^" << i << ">>  ";
-        Monomial monomial = inputMonomial();
-        polynomial.first.push_back(monomial);
+        Monomial monomial = inputMonomial(i);
+        polynomial.push_back(monomial);
     }
     return polynomial;
 }
 
-// void printPolynomial(const Polynomial& polynomial) {
 
-//     for (int i = polynomial.first.size() - 1; i >= 0; i--){
-
-//         long long num = polynomial.first[i].first.first;
-//     }
-    
-
-// }
 void printPolynomial(const Polynomial& polynomial) {
-    // Iterate over the monomials in reverse order
-    for (unsigned int i = 0; i < polynomial.first.size(); i++) {
+    
+    int n = polynomial.size();
+    for (unsigned int i = 0; i < n; i++) {
+        
         // Access the Monomial
-        Monomial monomial = polynomial.first[i];
+        Monomial monomial = polynomial[i];
         
         // Access the Fraction and degree
         Fraction fraction = monomial.first;
         unsigned int degree = monomial.second;
 
+        if( fraction.first < 0 || fraction.second < 0 ) {
+            cout << " - ";
+        }
+        else if (i > 0 && fraction.first > 0) {
+            cout << " + ";
+        }
         // Print the Fraction (numerator/denominator)
-        cout << fraction.first;
-        if(fraction.second != 1)
+        cout << absValue(fraction.first);
+        if(fraction.second != 1){
             cout << "/" << fraction.second;
-        
+        }
         // Print the degree (x^degree)
         if (degree > 0) {
             std::cout << "x^" << degree;
+            
         }
-
-        // Add a "+" between terms, except the last one
-        if (i < polynomial.first.size()-1) {
-            std::cout << " + ";
-        }
+        
     }
 
     // End the line after printing the polynomial
@@ -246,8 +314,14 @@ void showInformation() {
     cout << "11) Quit program\n"<<endl;
 }
 int main(){
-    Polynomial p=inputPolynomial(5);
-     printPolynomial(p);
+    cout<<"p"<<endl;
+    Polynomial p=inputPolynomial();
+    
+    cout<<"t"<<endl;
+    Polynomial t= inputPolynomial();
+     
+     cout<<endl;
+     addPolynomials(p,t);
 
 
 
