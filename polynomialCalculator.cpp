@@ -34,25 +34,12 @@ void printPolynomial(const Polynomial& polynomial);
 //void manageOptions();
 void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
 Fraction addFractions(const Fraction& f1, const Fraction& f2);
-void substractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
+void subtractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
+Fraction subtractFractions(const Fraction& f1, const Fraction& f2);
+void multiplyPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
+Fraction multiplyPolynomial(const Fraction& f1, const Fraction& f2);
 
 
-
-
-// vector<pair<int, double>> inputPolynomial(){
-//     vector<pair<int,double>> polynomial;
-//     int degree;
-//     double coefficient;
-
-//     cout << "Enter the number of terms in the polynomial: ";
-//     int numTerms;
-//     cin >> numTerms;
-
-//     for( int i = 0; i < numTerms; ++i){
-//         cout << ""
-//     }
-
-// }
 int fromCharToInt(char a) {
     return a - '0';
 }
@@ -70,7 +57,7 @@ int absValue(int num) {
     
         return num;
 }
-//Simplify the fraction
+
 Fraction simplifyFraction(long long numerator, long long denominator) {
     long long gcd = findGCD(absValue(numerator), absValue(denominator));
     numerator /= gcd;
@@ -102,24 +89,9 @@ long long parseInteger(const char* str, int index) {
         index++;
     }
 
-    return isNegative ? -result : result;
+    return isNegative ? -result : result; 
 }
 
-// void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2){
-    
-//     Monomial monomial1, monomial2,monomial;
-//     int index=0;
-//     unsigned int maxSize = (polynomial1.first.size() > polynomial2.first.size()) ? polynomial1.first.size() : polynomial2.first.size();
-//     Polynomial result;
-//     for(int i = maxSize; i >= 0; i--){
-//         monomial1 = polynomial1[i];
-//         monomial2 = polynomial2[i];
-//         monomial = monomial1.first + monomial2.first;
-//     }
-//     Monomial monomial1 = polynomial1.first[i]
-
-
-// }
 Fraction addFractions(const Fraction& f1, const Fraction& f2) {
     long long numerator1 = f1.first;
     long long denominator1 = f1.second;
@@ -132,22 +104,102 @@ Fraction addFractions(const Fraction& f1, const Fraction& f2) {
     return simplifyFraction(newNumerator, commonDenominator);
 }
 
-void substractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2){
+Fraction subtractFractions(const Fraction& f1, const Fraction& f2){
+    long long numerator1 = f1.first;
+    long long denominator1 = f1.second;
+    long long numerator2 = f2.first;
+    long long denominator2 = f2.second;
 
+    long long commonDenominator = denominator1 * denominator2;
+    long long newNumerator = numerator1 * denominator2 - numerator2 * denominator1;
+    return simplifyFraction(newNumerator, commonDenominator);
+}
+
+Fraction multiplyFractions(const Fraction& f1, const Fraction& f2) {
+    long long numerator = f1.first * f2.first;
+    long long denominator = f1.second * f2.second;
+    return simplifyFraction(numerator, denominator);
+}
+void multiplyPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2) {
+    Polynomial result;
+
+    // Multiply each monomial from p1 with each monomial from p2
+    for (size_t i = 0; i < polynomial1.size(); ++i) {
+        for (size_t j = 0; j < polynomial2.size(); ++j) {
+            // Get the monomials
+            Monomial monomial1 = polynomial1[i];
+            Monomial monomial2 = polynomial2[j];
+
+            // Multiply coefficients (fractions)
+            Fraction newCoefficient = multiplyFractions(monomial1.first, monomial2.first);
+            // Add exponents
+            unsigned int newExponent = monomial1.second + monomial2.second;
+
+            // Check if a term with the same exponent already exists in the result
+            bool found = false;
+            for (size_t k = 0; k < result.size(); ++k) {
+                if (result[k].second == newExponent) {
+                    // Add coefficients
+                    result[k].first = addFractions(result[k].first, newCoefficient);
+                    found = true;
+                    break;
+                }
+            }
+
+            // If no term with the same exponent exists, add a new term
+            if (!found) {
+                result.push_back({newCoefficient, newExponent});
+            }
+        }
+    }
+
+    printPolynomial(result);
+}
+
+   
+void subtractPolynomials(const Polynomial& poly1, const Polynomial& poly2) {
+    Polynomial result;
+    unsigned int i = 0, j = 0;
+
+    
+    while (i < poly1.size() || j < poly2.size()) {
+        if (i < poly1.size() && (j >= poly2.size() || poly1[i].second > poly2[j].second)) {
+            // If polynomial1 has a term with a higher power, add it directly to the result
+            result.push_back(poly1[i]);
+            i++;
+        } 
+        else if (j < poly2.size() && (i >= poly1.size() || poly2[j].second > poly1[i].second)) {
+            // If polynomial2 has a term with a higher power, add it as a negative to the result
+            Fraction negCoefficient = Fraction(-poly2[j].first.first, poly2[j].first.second);
+            result.push_back(Monomial(negCoefficient, poly2[j].second));
+            j++;
+        } 
+        else { 
+            // If both polynomials have terms with the same power, subtract their coefficients
+            Fraction newCoefficient = subtractFractions(poly1[i].first, poly2[j].first);
+            if (newCoefficient.first != 0) { // Skip zero coefficients
+                result.push_back(Monomial(newCoefficient, poly1[i].second));
+            }
+            i++;
+            j++;
+        }
+    }
+        printPolynomial(result);
+    
 }
 void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2) {
     Polynomial result;
     unsigned int i = 0, j = 0;
     
-    // Process both polynomials term by term
+    
     while (i < polynomial1.size() || j < polynomial2.size()) {
         if (i < polynomial1.size() && (j >= polynomial2.size() || polynomial1[i].second > polynomial2[j].second)) {
-            // If poly1 has a term with a higher power, add it directly to the result
+            // If polynomial1 has a term with a higher power, add it directly to the result
             result.push_back(polynomial1[i]);
             i++;
         } 
         else if (j < polynomial2.size() && (i >= polynomial1.size() || polynomial2[j].second > polynomial1[i].second)) {
-            // If poly2 has a term with a higher power, add it directly to the result
+            // If polynomial2 has a term with a higher power, add it directly to the result
             result.push_back(polynomial2[j]);
             j++;
         } 
@@ -212,8 +264,7 @@ void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2
 
 // }
 Fraction inputFraction()  {
-    //cout << "Enter a fraction (format: numerator/denominator or just numerator): ";
-
+    
     char input[50];
     cin >> input;
 
@@ -230,18 +281,19 @@ Fraction inputFraction()  {
         denominator = parseInteger(input, index);
     }
 
-    // Simplify the fraction
+    
     return simplifyFraction(numerator, denominator);
 
 }
 
 Monomial inputMonomial(unsigned int power){
-    //cout << "Enter monomial coefficient (fractional form):\n";
+    
     Fraction coefficient = inputFraction();
 
     return {coefficient, power};
 
 }
+
 Polynomial inputPolynomial() {
     Polynomial polynomial;
     
@@ -290,7 +342,7 @@ void printPolynomial(const Polynomial& polynomial) {
     }
 
     // End the line after printing the polynomial
-    std::cout << std::endl;
+    cout << endl;
 }
 void showInformation() {
     cout << "Welcome to Polynomial Calculator - a mini"
@@ -314,13 +366,8 @@ int main(){
     Polynomial p=inputPolynomial();
     
     cout<<"t"<<endl;
-    Polynomial t= inputPolynomial();
+    Polynomial t= inputPolynomial(); 
      
      cout<<endl;
-     addPolynomials(p,t);
-
-    
-
-
-    
+     multiplyPolynomials(p,t);
 }
