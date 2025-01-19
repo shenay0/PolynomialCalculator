@@ -34,11 +34,17 @@ void printPolynomial(const Polynomial& polynomial);
 //void manageOptions();
 void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
 Fraction addFractions(const Fraction& f1, const Fraction& f2);
-void subtractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
+Polynomial subtractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
 Fraction subtractFractions(const Fraction& f1, const Fraction& f2);
 void multiplyPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
 Fraction multiplyPolynomial(const Fraction& f1, const Fraction& f2);
-
+void multiplyByScalar(const Polynomial& polynomial1, const Fraction& scalar);
+Fraction multiplyFractionByScalar(const Fraction& f1, const Fraction& scalar);
+Fraction evaluatePolynomial(const Polynomial& polynomial, const Fraction& scalar);
+Fraction powerFraction(const Fraction& fraction, unsigned int exp);
+void printFraction(const Fraction& fraction);
+pair<Polynomial, Polynomial> dividePolynomials(const Polynomial& dividend, const Polynomial& divisor);
+Fraction divideFractions(const Fraction& f1, const Fraction& f2);
 
 int fromCharToInt(char a) {
     return a - '0';
@@ -91,7 +97,17 @@ long long parseInteger(const char* str, int index) {
 
     return isNegative ? -result : result; 
 }
+Fraction powerFraction(const Fraction& fraction, unsigned int exp) {
+    long long numerator = 1;
+    long long denominator = 1;
 
+    for (unsigned int i = 0; i < exp; ++i) {
+        numerator *= fraction.first;
+        denominator *= fraction.second;
+    }
+
+    return simplifyFraction(numerator, denominator);
+}
 Fraction addFractions(const Fraction& f1, const Fraction& f2) {
     long long numerator1 = f1.first;
     long long denominator1 = f1.second;
@@ -102,6 +118,12 @@ Fraction addFractions(const Fraction& f1, const Fraction& f2) {
     long long newNumerator = numerator1 * denominator2 + numerator2 * denominator1;
    
     return simplifyFraction(newNumerator, commonDenominator);
+}
+
+Fraction divideFractions(const Fraction& f1, const Fraction& f2) {
+    long long numerator = f1.first * f2.second;
+    long long denominator = f1.second * f2.first;
+    return simplifyFraction(numerator, denominator);
 }
 
 Fraction subtractFractions(const Fraction& f1, const Fraction& f2){
@@ -119,6 +141,75 @@ Fraction multiplyFractions(const Fraction& f1, const Fraction& f2) {
     long long numerator = f1.first * f2.first;
     long long denominator = f1.second * f2.second;
     return simplifyFraction(numerator, denominator);
+}
+Fraction multiplyFractionByScalar(const Fraction& f1, const Fraction& scalar){
+    long long numerator = f1.first * scalar.first;
+    long long denominator = f1.second * scalar.second;
+    return {numerator, denominator};
+}
+
+pair<Polynomial, Polynomial> dividePolynomials(const Polynomial& dividend, const Polynomial& divisor) {
+    Polynomial quotient;
+    Polynomial remainder = dividend;
+
+    while (!remainder.empty() && remainder[0].second >= divisor[0].second) {
+        // Calculate the leading term of the quotient
+        Fraction leadCoeff = divideFractions(remainder[0].first, divisor[0].first);
+        unsigned int leadPower = remainder[0].second - divisor[0].second;
+        Monomial leadTerm = {leadCoeff, leadPower};
+        quotient.push_back(leadTerm);
+
+        // Subtract the product of divisor and lead term from remainder
+        Polynomial temp;
+        for (size_t j = 0; j < divisor.size(); ++j) {
+            const Monomial& monomial = divisor[j];
+            Fraction coeff = multiplyFractions(monomial.first, leadCoeff);
+            unsigned int power = monomial.second + leadPower;
+            temp.push_back({coeff, power});
+        }
+
+        
+        remainder = subtractPolynomials(remainder, temp);
+
+        
+    }
+
+    return {quotient, remainder};
+}
+
+Fraction evaluatePolynomial(const Polynomial& polynomial, const Fraction& scalar) {
+    Fraction result = {0, 1}; // Initialize as zero 
+    unsigned int n = polynomial.size();
+    
+    for (size_t i = 0; i < n; ++i) {
+        const Fraction& coefficient = polynomial[i].first;
+        unsigned int exponent = polynomial[i].second;
+
+        // Compute scalar^exponent
+        Fraction scalarPower = powerFraction(scalar, exponent);
+        
+        // Multiply the coefficient by scalar^exponent
+         Fraction termValue = multiplyFractions(coefficient, scalarPower);
+
+        // Add the term value to the result
+        result = addFractions(result, termValue);
+    }
+
+    return result;
+}
+
+void multiplyByScalar (const Polynomial& polynomial, const Fraction& scalar) {
+    Polynomial result;
+    size_t n = polynomial.size();
+
+    for( size_t i = 0; i < n; i++)  {
+        // multiply i- monomial's coefficient by the scalar
+        Fraction newCoefficient = multiplyFractions(polynomial[i].first, scalar);
+        
+        result.push_back({newCoefficient, polynomial[i].second});
+    }
+
+    printPolynomial(result);
 }
 void multiplyPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2) {
     Polynomial result;
@@ -157,7 +248,7 @@ void multiplyPolynomials(const Polynomial& polynomial1, const Polynomial& polyno
 }
 
    
-void subtractPolynomials(const Polynomial& poly1, const Polynomial& poly2) {
+Polynomial subtractPolynomials(const Polynomial& poly1, const Polynomial& poly2) {
     Polynomial result;
     unsigned int i = 0, j = 0;
 
@@ -184,7 +275,7 @@ void subtractPolynomials(const Polynomial& poly1, const Polynomial& poly2) {
             j++;
         }
     }
-        printPolynomial(result);
+        return result;
     
 }
 void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2) {
@@ -344,6 +435,12 @@ void printPolynomial(const Polynomial& polynomial) {
     // End the line after printing the polynomial
     cout << endl;
 }
+void printFraction(const Fraction& fraction) {
+    cout << fraction.first; // Print the numerator
+    if (fraction.second != 1) { // Print the denominator only if it's not 1
+        cout << "/" << fraction.second;
+    }
+}
 void showInformation() {
     cout << "Welcome to Polynomial Calculator - a mini"
          << "project intented to work with polynomials"; 
@@ -364,10 +461,22 @@ void showInformation() {
 int main(){
     cout<<"p"<<endl;
     Polynomial p=inputPolynomial();
+    // cout<< "Input scalar:";
+    // Fraction scalar = inputFraction();
     
     cout<<"t"<<endl;
     Polynomial t= inputPolynomial(); 
      
      cout<<endl;
-     multiplyPolynomials(p,t);
+    //6.  Fraction a = evaluatePolynomial(p,scalar);
+    //  printFraction(a);
+    // 7. pair <Polynomial, Polynomial> result = dividePolynomials(p,t);
+    // Polynomial quotient = result.first;
+    // Polynomial remainder = result.second;
+
+    
+    // cout<<"Quotient: ";
+    // printPolynomial(quotient);
+    // cout<<"Remainder: ";
+    // printPolynomial(remainder);
 }
