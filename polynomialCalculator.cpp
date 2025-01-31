@@ -74,6 +74,10 @@ Fraction simplifyFraction(long long numerator, long long denominator) {
         numerator = -numerator;
         denominator = -denominator;
     }
+    else if( denominator == 0) {
+        cout << "Denominator cannot be 0, defaulting it to 1" << endl;
+        denominator = 1;
+    }
 
     return {numerator, denominator};
 }
@@ -177,6 +181,34 @@ pair<Polynomial, Polynomial> dividePolynomials(const Polynomial& dividend, const
     return {quotient, remainder};
 }
 
+
+void generateVietaFormulas(const Polynomial& poly) {
+    // Ensure the polynomial has enough terms
+    if (poly.empty()) {
+        cout << "Error: Polynomial is empty." << endl;
+        return;
+    }
+
+    unsigned int degree = poly.size() - 1;  // Degree of the polynomial
+
+    // Leading coefficient a_n
+    Fraction a_n = poly[0].first;  // The first term corresponds to the highest degree (reversed order)
+
+    cout << "Vieta's Formulas for the polynomial:" << endl;
+
+    // Loop through terms to calculate Vieta's formulas
+    for (unsigned int k = 1; k <= degree; ++k) {
+        if (k <= degree) {
+            Fraction a_k = poly[k].first;  
+            Fraction term = divideFractions(
+                {(((k + 1) % 2 == 0) ? -a_k.first : a_k.first), a_k.second},
+                {a_n.first, a_n.second}
+            );
+            cout << "Sum  " << k << ": "<< term.first << "/" << term.second << endl;
+        }
+    }
+}
+
 Fraction evaluatePolynomial(const Polynomial& polynomial, const Fraction& scalar) {
     Fraction result = {0, 1}; // Initialize as zero 
     unsigned int n = polynomial.size();
@@ -211,6 +243,7 @@ void multiplyByScalar (const Polynomial& polynomial, const Fraction& scalar) {
 
     printPolynomial(result);
 }
+
 void multiplyPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2) {
     Polynomial result;
 
@@ -302,58 +335,103 @@ void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2
             j++;
         }
     }
-    
+    cout << "P(x) + Q(x) = ";
     printPolynomial(result);
 }
-// void manageOptions() {
-//     unsigned int option = 0;
-    
-//     cout << "Enter your option here>> ";
-//     cin >> option;
+pair <Polynomial,Polynomial> inputTwoPolynomials() {
+    cout << "Enter Polynomial P(x)>> \n";
+    Polynomial polynomial1 = inputPolynomial();
+    cout << "P(x)= ";
+    printPolynomial(polynomial1);
+    cout << endl;
 
-//     switch(option) {
-//         case 1: {
-//             cout << "Enter Polynomial P(x): \n" << endl;
-//             Polynomial polynomial1 = inputPolynomial();
-//             printPolynomial(polynomial1);
+    cout << "Enter Polynomial Q(x)>> \n";
+    Polynomial polynomial2 = inputPolynomial();
+    cout << "Q(x)= ";
+    printPolynomial(polynomial2);
+    cout << endl;
+    return {polynomial1, polynomial2};
+}
+void manageOptions() {
+    unsigned int option = 0;
+    do {
+    cout << endl;
+    cout << "Enter your option here>> ";
+    cin >> option;
+    cout << endl;
 
-//             cout<<endl;
+    switch(option) {
+        case 1: {
+            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+            addPolynomials(polynomials.first,polynomials.second);
+            break;
+        }
+        case 2:{
+            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+            Polynomial poly = subtractPolynomials(polynomials.first,polynomials.second);
+            cout << "P(x) - Q(x) = ";
+            printPolynomial(poly);
+            break; 
+        }
+        case 3: {
+            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+            multiplyPolynomials(polynomials.first,polynomials.second);
+            break;
+        }
+        case 4: {
+            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+            Polynomial quotient = dividePolynomials(polynomials.first,polynomials.second).first;
+            cout << "Quotient: ";
+            printPolynomial(quotient);
+            Polynomial reminder = dividePolynomials(polynomials.first,polynomials.second).second;
+            cout << "Reminder: ";
+            printPolynomial(reminder);
+            break;
+        }
+        case 5: {
+            cout << "Enter Polynomial P(x): ";
+            Polynomial polynomial = inputPolynomial();
+            cout << "P(x): ";
+            printPolynomial(polynomial);
+            cout << "Enter rational number>> " << endl;
+            Fraction scalar = inputFraction();
+            multiplyByScalar(polynomial, scalar);
+            break;
+        }
+        case 6: {
+            cout << "Enter Polynomial P(x): ";
+            Polynomial polynomial = inputPolynomial();
+            cout << "P(x): ";
+            printPolynomial(polynomial);
+            Fraction number = inputFraction();
+            Fraction result = evaluatePolynomial(polynomial, number);
+            cout << "P("; 
+            printFraction(number);
+            cout << ") = ";
+            printFraction(result);
+            break;
+        }
+        case 7: return;
+        case 8: {
+            cout << "Enter Polynomial P(x)" << endl;
+            Polynomial polynomial = inputPolynomial();
+            cout << endl;
 
-//             cout << "Enter Polynomial Q(x): " << endl;
-//             Polynomial polynomial2 = inputPolynomial();
-//             printPolynomial( polynomial2);
+            cout << "Vieta's Formulas for polynomial: P(x) = ";
+            printPolynomial(polynomial);
+            generateVietaFormulas(polynomial);
 
+            break;
+        }
+        case 9: return;
+        case 10: return;
+        default:
+        cout<<"Invalid option for functionality!"<<endl;
+        return;
+    }
+    } while(option != 11);
 
-//             cout << "P(x) + Q(x): ";
-//             addPolynomials(polynomial1, polynomial2);
-            
-//             return;
-//         }
-//         case 2: return; 
-//         case 3: return;
-//         case 4: return;
-//         case 5: return;
-//         case 6: return;
-//         case 7: return;
-//         case 8: {
-//             Polynomial polynomial = inputPolynomial("P(x)");
-//             cout << "Vieta's Formulas for polynomial: ";
-//             printPolynomial("P(x)", polynomial);
-
-//             cout << endl;
-
-//             generateVieta(polynomial);
-
-//             return;
-//         }
-//         case 9: return;
-//         case 10: return;
-//         case 11: return;
-//         default:
-//         cout<<"Invalid option for functionality!"<<endl;
-//     }
-
-// }
+}
 Fraction inputFraction()  {
     
     char input[50];
@@ -361,11 +439,14 @@ Fraction inputFraction()  {
 
     long long numerator = 0, denominator = 1;
     int index = 0;
-
     // Parse the numerator
     numerator = parseInteger(input, index);
+    if (input[0] == '-') {
+        index++;
+    }
     index++;
     // Check for '/'
+    
     if (input[index] == '/') {
         index++; // Skip the '/'
         // Parse the denominator
@@ -376,6 +457,7 @@ Fraction inputFraction()  {
     return simplifyFraction(numerator, denominator);
 
 }
+
 
 Monomial inputMonomial(unsigned int power){
     
@@ -400,41 +482,67 @@ Polynomial inputPolynomial() {
     return polynomial;
 }
 
-
 void printPolynomial(const Polynomial& polynomial) {
-    
     int n = polynomial.size();
+    bool firstTerm = true; // Used to format the first term correctly
+
     for (unsigned int i = 0; i < n; i++) {
-        
-        // Access the Monomial
-        Monomial monomial = polynomial[i];
-        
-        // Access the Fraction and degree
-        Fraction fraction = monomial.first;
+        // Extract monomial
+        const Monomial& monomial = polynomial[i];
+
+        // Extract fraction (coefficient) and degree
+        const Fraction& fraction = monomial.first;
+        long long numerator = fraction.first;
+        long long denominator = fraction.second;
         unsigned int degree = monomial.second;
 
-        if( fraction.first < 0 || fraction.second < 0 ) {
-            cout << " - ";
+        // Skip terms with a coefficient of 0
+        if (numerator == 0) {
+            continue;
         }
-        else if (i > 0 && fraction.first > 0) {
-            cout << " + ";
+
+        // Handle signs and spacing properly
+        if (!firstTerm) {
+            if (numerator > 0) {
+                cout << " + ";
+            } else {
+                cout << " - ";
+            }
+        } else {
+            if (numerator < 0) {
+                cout << "-";
+            }
         }
-        // Print the Fraction (numerator/denominator)
-        cout << absValue(fraction.first);
-        if(fraction.second != 1){
-            cout << "/" << fraction.second;
+
+        // Print absolute value of numerator
+        bool isOne = (absValue(numerator) == 1 && denominator == 1);
+        if(!isOne || degree == 0){
+        cout << absValue(numerator);
         }
-        // Print the degree (x^degree)
+        // Print denominator only if it's not 1
+        if (denominator != 1) {
+            cout << "/" << denominator;
+        }
+
+        // Print variable and exponent
         if (degree > 0) {
-            std::cout << "x^" << degree;
-            
+            cout << "x";
+            if (degree > 1) {
+                cout << "^" << degree;
+            }
         }
-        
+
+        firstTerm = false; // First term handled, format remaining correctly
     }
 
-    // End the line after printing the polynomial
+    // If all terms were 0, print just 0
+    if (firstTerm) {
+        cout << "0";
+    }
+
     cout << endl;
 }
+ 
 void printFraction(const Fraction& fraction) {
     cout << fraction.first; // Print the numerator
     if (fraction.second != 1) { // Print the denominator only if it's not 1
@@ -459,24 +567,7 @@ void showInformation() {
     cout << "11) Quit program\n"<<endl;
 }
 int main(){
-    cout<<"p"<<endl;
-    Polynomial p=inputPolynomial();
-    // cout<< "Input scalar:";
-    // Fraction scalar = inputFraction();
+    showInformation();
+    manageOptions();
     
-    cout<<"t"<<endl;
-    Polynomial t= inputPolynomial(); 
-     
-     cout<<endl;
-    //6.  Fraction a = evaluatePolynomial(p,scalar);
-    //  printFraction(a);
-    // 7. pair <Polynomial, Polynomial> result = dividePolynomials(p,t);
-    // Polynomial quotient = result.first;
-    // Polynomial remainder = result.second;
-
-    
-    // cout<<"Quotient: ";
-    // printPolynomial(quotient);
-    // cout<<"Remainder: ";
-    // printPolynomial(remainder);
 }
