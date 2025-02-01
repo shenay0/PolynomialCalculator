@@ -22,6 +22,8 @@ typedef pair<long long, long long>    Fraction    ;
 typedef pair<Fraction, unsigned int>   Monomial    ;
 typedef vector <Monomial>  Polynomial  ;
 
+void showInformation();
+void manageOptions();
 int fromCharToInt(char a);
 long long findGCD(long long a, long long b);
 int absValue(int num);
@@ -31,7 +33,6 @@ long long parseInteger(const char* str, int index);
 Monomial inputMonomial(unsigned int power);
 Polynomial inputPolynomial();
 void printPolynomial(const Polynomial& polynomial);
-//void manageOptions();
 void addPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
 Fraction addFractions(const Fraction& f1, const Fraction& f2);
 Polynomial subtractPolynomials(const Polynomial& polynomial1, const Polynomial& polynomial2);
@@ -45,6 +46,8 @@ Fraction powerFraction(const Fraction& fraction, unsigned int exp);
 void printFraction(const Fraction& fraction);
 pair<Polynomial, Polynomial> dividePolynomials(const Polynomial& dividend, const Polynomial& divisor);
 Fraction divideFractions(const Fraction& f1, const Fraction& f2);
+void generateVietaFormulas(const Polynomial& poly);
+Polynomial differentiatePolynomial(const Polynomial& poly, unsigned int k);
 
 int fromCharToInt(char a) {
     return a - '0';
@@ -65,6 +68,7 @@ int absValue(int num) {
 }
 
 Fraction simplifyFraction(long long numerator, long long denominator) {
+    
     long long gcd = findGCD(absValue(numerator), absValue(denominator));
     numerator /= gcd;
     denominator /= gcd;
@@ -125,6 +129,10 @@ Fraction addFractions(const Fraction& f1, const Fraction& f2) {
 }
 
 Fraction divideFractions(const Fraction& f1, const Fraction& f2) {
+    if (f2.first == 0 ){
+        cout <<"Error: Cannot divide by a fraction with zero numerator";
+        return {0,1};
+    }
     long long numerator = f1.first * f2.second;
     long long denominator = f1.second * f2.first;
     return simplifyFraction(numerator, denominator);
@@ -157,6 +165,10 @@ pair<Polynomial, Polynomial> dividePolynomials(const Polynomial& dividend, const
     Polynomial remainder = dividend;
 
     while (!remainder.empty() && remainder[0].second >= divisor[0].second) {
+        if (divisor[0].first.first == 0) {
+        cout << "Error: Division by a polynomial with a zero leading coefficient\n" << endl;
+        return {quotient, remainder}; // Return current state instead of looping forever
+        }
         // Calculate the leading term of the quotient
         Fraction leadCoeff = divideFractions(remainder[0].first, divisor[0].first);
         unsigned int leadPower = remainder[0].second - divisor[0].second;
@@ -181,6 +193,37 @@ pair<Polynomial, Polynomial> dividePolynomials(const Polynomial& dividend, const
     return {quotient, remainder};
 }
 
+Polynomial differentiatePolynomial(const Polynomial& poly, unsigned int k) {
+    Polynomial result = poly;
+
+    for (unsigned int i = 0; i < k; ++i) {
+        Polynomial newResult;
+        for (size_t j = 0; j < result.size(); ++j) {
+            Fraction coeff = result[j].first;
+            unsigned int degree = result[j].second;
+
+            if (degree == 0) {
+                continue;  // The derivative of a constant is zero
+            }
+
+            // Differentiate once: new coefficient = (old coefficient * degree)
+            long long newNumerator = coeff.first * degree;
+            long long newDenominator = coeff.second;
+            Fraction newCoeff = simplifyFraction(newNumerator, newDenominator);
+            unsigned int newDegree = degree - 1;
+
+            newResult.push_back({newCoeff, newDegree});
+        }
+
+        if (newResult.empty()) {
+            return {{{0, 1}, 0}}; // If derivative is 0, return 0
+        }
+
+        result = newResult; // Move to next derivative
+    }
+
+    return result;
+}
 
 void generateVietaFormulas(const Polynomial& poly) {
     // Ensure the polynomial has enough terms
@@ -194,7 +237,6 @@ void generateVietaFormulas(const Polynomial& poly) {
     // Leading coefficient a_n
     Fraction a_n = poly[0].first;  // The first term corresponds to the highest degree (reversed order)
 
-    cout << "Vieta's Formulas for the polynomial:" << endl;
 
     // Loop through terms to calculate Vieta's formulas
     for (unsigned int k = 1; k <= degree; ++k) {
@@ -204,7 +246,13 @@ void generateVietaFormulas(const Polynomial& poly) {
                 {(((k + 1) % 2 == 0) ? -a_k.first : a_k.first), a_k.second},
                 {a_n.first, a_n.second}
             );
-            cout << "Sum  " << k << ": "<< term.first << "/" << term.second << endl;
+            cout << "Sum  " << k << ": "<< term.first;
+            if(term.second != 1){
+                cout << "/" << term.second << endl;
+            }
+            else {
+                cout << endl;
+            }
         }
     }
 }
@@ -355,81 +403,100 @@ pair <Polynomial,Polynomial> inputTwoPolynomials() {
 void manageOptions() {
     unsigned int option = 0;
     do {
-    cout << endl;
-    cout << "Enter your option here>> ";
-    cin >> option;
-    cout << endl;
+        cout << endl;
+        showInformation();
+        cout << endl;
+        cout << "Enter your option here>> ";
+        cin >> option;
+        cout << endl;
 
-    switch(option) {
-        case 1: {
-            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
-            addPolynomials(polynomials.first,polynomials.second);
-            break;
-        }
-        case 2:{
-            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
-            Polynomial poly = subtractPolynomials(polynomials.first,polynomials.second);
-            cout << "P(x) - Q(x) = ";
-            printPolynomial(poly);
-            break; 
-        }
-        case 3: {
-            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
-            multiplyPolynomials(polynomials.first,polynomials.second);
-            break;
-        }
-        case 4: {
-            pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
-            Polynomial quotient = dividePolynomials(polynomials.first,polynomials.second).first;
-            cout << "Quotient: ";
-            printPolynomial(quotient);
-            Polynomial reminder = dividePolynomials(polynomials.first,polynomials.second).second;
-            cout << "Reminder: ";
-            printPolynomial(reminder);
-            break;
-        }
-        case 5: {
-            cout << "Enter Polynomial P(x): ";
-            Polynomial polynomial = inputPolynomial();
-            cout << "P(x): ";
-            printPolynomial(polynomial);
-            cout << "Enter rational number>> " << endl;
-            Fraction scalar = inputFraction();
-            multiplyByScalar(polynomial, scalar);
-            break;
-        }
-        case 6: {
-            cout << "Enter Polynomial P(x): ";
-            Polynomial polynomial = inputPolynomial();
-            cout << "P(x): ";
-            printPolynomial(polynomial);
-            Fraction number = inputFraction();
-            Fraction result = evaluatePolynomial(polynomial, number);
-            cout << "P("; 
-            printFraction(number);
-            cout << ") = ";
-            printFraction(result);
-            break;
-        }
-        case 7: return;
-        case 8: {
-            cout << "Enter Polynomial P(x)" << endl;
-            Polynomial polynomial = inputPolynomial();
-            cout << endl;
+        switch(option) {
+            case 1: {
+                pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+                addPolynomials(polynomials.first,polynomials.second);
+                break;
+            }
+            case 2:{
+                pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+                Polynomial poly = subtractPolynomials(polynomials.first,polynomials.second);
+                cout << "P(x) - Q(x) = ";
+                printPolynomial(poly);
+                break; 
+            }
+            case 3: {
+                pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+                multiplyPolynomials(polynomials.first,polynomials.second);
+                break;
+            }
+            case 4: {
+                pair <Polynomial,Polynomial> polynomials= inputTwoPolynomials();
+                Polynomial quotient = dividePolynomials(polynomials.first,polynomials.second).first;
+                cout << "Quotient: ";
+                printPolynomial(quotient);
+                Polynomial reminder = dividePolynomials(polynomials.first,polynomials.second).second;
+                cout << "Reminder: ";
+                printPolynomial(reminder);
+                cout << endl;
+                break;
+            }
+            case 5: {
+                cout << "Enter Polynomial P(x): \n";
+                Polynomial polynomial = inputPolynomial();
+                cout << "P(x): ";
+                printPolynomial(polynomial);
+                cout << "Enter rational number>> " << endl;
+                Fraction scalar = inputFraction();
+                multiplyByScalar(polynomial, scalar);
+                break;
+            }
+            case 6: {
+                cout << "Enter Polynomial P(x): \n";
+                Polynomial polynomial = inputPolynomial();
+                cout << "P(x): ";
+                printPolynomial(polynomial);
+                cout << "Enter x >> ";
+                Fraction number = inputFraction();
+                Fraction result = evaluatePolynomial(polynomial, number);
+                cout << "P("; 
+                printFraction(number);
+                cout << ") = ";
+                printFraction(result);
+                cout << "\n" <<endl;
+                break;
+            }
+            case 7:{
+                cout << "Enter Polynomial P(x): \n";
+                Polynomial polynomial = inputPolynomial();
+                cout << "P(x): ";
+                printPolynomial(polynomial);
+                unsigned int k = 0;
+                cout << "Enter k>> ";
+                cin >> k;
+                Polynomial result = differentiatePolynomial(polynomial, k);
+                cout << "The derivative is: ";
+                printPolynomial(result);
 
-            cout << "Vieta's Formulas for polynomial: P(x) = ";
-            printPolynomial(polynomial);
-            generateVietaFormulas(polynomial);
-
             break;
+            }
+            case 8: {
+                cout << "Enter Polynomial P(x): \n" << endl;
+                Polynomial polynomial = inputPolynomial();
+                cout << endl;
+
+                cout << "Vieta's Formulas for polynomial: P(x) = ";
+                printPolynomial(polynomial);
+                generateVietaFormulas(polynomial);
+
+                break;
+            }
+            case 9: return;
+            default:{
+            cout<<"Invalid option for functionality! \n"<<endl;
+            break;
+            }
+            
         }
-        case 9: return;
-        case 10: return;
-        default:
-        cout<<"Invalid option for functionality!"<<endl;
-        return;
-    }
-    } while(option != 11);
+        } while(option != 9);
 
 }
 Fraction inputFraction()  {
@@ -471,7 +538,7 @@ Polynomial inputPolynomial() {
     Polynomial polynomial;
     
     unsigned int power;
-    cout << "Enter degree of your Polynomial: " << endl;
+    cout << "Enter degree of your Polynomial: ";
     cin >> power;
 
     for (int i = power; i >= 0; i--){
@@ -560,14 +627,12 @@ void showInformation() {
     cout << "4) Divide polynomials\n";
     cout << "5) Multiply polynomial by scalar\n";
     cout << "6) Find value of polynomial by scalar\n";
-    cout << "7) Find GCD of two polynomials\n";
+    cout << "7) Find the k-th derivative of a polynomial\n";
     cout << "8) Display Vieta's formulas for given polynomial\n";
-    cout << "9) Represent a polynomial in powers of (x+a)\n";
-    cout << "10) Factor polynomial and find its rational roots\n";
-    cout << "11) Quit program\n"<<endl;
+    cout << "9) Quit program\n"<<endl;
 }
 int main(){
-    showInformation();
+
     manageOptions();
     
 }
